@@ -273,3 +273,61 @@ resource "aws_eks_node_group" "main" {
     Name = "devops-voting-node"
   }
 }
+
+
+# IAM role for EBS CSI Driver through EKS Pod Identity
+resource "aws_iam_role" "ebs_csi" {
+  name = "devops-voting-ebs-csi-role"
+
+  assume_role_policy = jsonencode({
+    Version = "2012-10-17"
+
+    Statement = [{
+      Effect = "Allow"
+
+      Principal = {
+        Service = "pods.eks.amazonaws.com"
+      }
+
+      Action = [
+        "sts:AssumeRole",
+        "sts:TagSession"
+      ]
+    }]
+  })
+}
+
+# Permissions required by the EBS CSI Driver
+resource "aws_iam_role_policy_attachment" "ebs_csi" {
+  role       = aws_iam_role.ebs_csi.name
+  policy_arn = "arn:aws:iam::aws:policy/AmazonEBSCSIDriverPolicyV2"
+  #arn:aws:iam::aws:policy/AmazonEBSCSIDriverPolicyV2
+}
+
+# EKS Pod Identity Agent
+resource "aws_eks_addon" "pod_identity_agent" {
+  cluster_name  = aws_eks_cluster.main.name
+  addon_name    = "eks-pod-identity-agent"
+  addon_version = "v1.4.0-eksbuild.2"
+
+  depends_on = [
+    aws_eks_node_group.main
+  ]
+}
+
+# Amazon EBS CSI Driver
+resource "aws_eks_addon" "ebs_csi" {
+  cluster_name  = aws_eks_cluster.main.name
+  addon_name    = "aws-ebs-csi-driver"
+  addon_version = "v1.65.0-eksbuild.2"
+
+  pod_identity_association {
+    role_arn        = aws_iam_role.ebs_csi.arn
+    service_account = "ebs-csi-controller-sa"
+  }
+
+  depends_on = [
+    aws_eks_addon.pod_identity_agent,
+    aws_iam_role_policy_attachment.ebs_csi
+  ]
+}
