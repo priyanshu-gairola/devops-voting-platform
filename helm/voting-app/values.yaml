@@ -1,38 +1,67 @@
 vote:
   replicaCount: 2
-
   image:
     repository: 687633314339.dkr.ecr.ap-south-1.amazonaws.com/devops-voting/vote
     tag: "1.0.0"
+  resources:
+    requests:
+      cpu: 100m
+      memory: 128Mi
+    limits:
+      cpu: 250m
+      memory: 256Mi
 
 redis:
   replicaCount: 1
-
   image:
     repository: redis
     tag: alpine
+  resources:
+    requests:
+      cpu: 50m
+      memory: 64Mi
+    limits:
+      cpu: 200m
+      memory: 128Mi
 
 db:
   replicaCount: 1
-
   image:
     repository: postgres
     tag: "15-alpine"
-
   storage:
     size: 5Gi
     storageClass: gp2
+  resources:
+    requests:
+      cpu: 100m
+      memory: 256Mi
+    limits:
+      cpu: 500m
+      memory: 512Mi
 
 worker:
   replicaCount: 1
-
   image:
     repository: dockersamples/examplevotingapp_worker
     tag: latest
+  resources:
+    requests:
+      cpu: 50m
+      memory: 128Mi
+    limits:
+      cpu: 250m
+      memory: 256Mi
 
 result:
   replicaCount: 1
-
   image:
     repository: dockersamples/examplevotingapp_result
     tag: latest
+  resources:
+    requests:
+      cpu: 50m
+      memory: 128Mi
+    limits:
+      cpu: 250m
+      memory: 256Mi

@@ -9,6 +9,12 @@ metadata:
 spec:
   replicas: {{ .Values.worker.replicaCount }}
 
+  strategy:
+  type: RollingUpdate
+  rollingUpdate:
+    maxUnavailable: 0
+    maxSurge: 1
+
   selector:
     matchLabels:
       app: worker
@@ -22,3 +28,11 @@ spec:
       containers:
         - name: worker
           image: {{ .Values.worker.image.repository }}:{{ .Values.worker.image.tag }}
+
+          resources:
+            requests:
+              cpu: {{ .Values.worker.resources.requests.cpu }}
+              memory: {{ .Values.worker.resources.requests.memory }}
+            limits:
+              cpu: {{ .Values.worker.resources.limits.cpu }}
+              memory: {{ .Values.worker.resources.limits.memory }}

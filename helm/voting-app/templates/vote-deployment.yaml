@@ -7,6 +7,12 @@ metadata:
 spec:
   replicas: {{ .Values.vote.replicaCount }}
 
+  strategy:
+  type: RollingUpdate
+  rollingUpdate:
+    maxUnavailable: 0
+    maxSurge: 1
+
   selector:
     matchLabels:
       app: vote
@@ -23,3 +29,25 @@ spec:
 
           ports:
             - containerPort: 80
+
+          readinessProbe:
+            httpGet:
+              path: /
+              port: 80
+            initialDelaySeconds: 5
+            periodSeconds: 10
+
+          livenessProbe:
+            httpGet:
+              path: /
+              port: 80
+            initialDelaySeconds: 10
+            periodSeconds: 20
+
+          resources:
+            requests:
+              cpu: {{ .Values.vote.resources.requests.cpu }}
+              memory: {{ .Values.vote.resources.requests.memory }}
+            limits:
+              cpu: {{ .Values.vote.resources.limits.cpu }}
+              memory: {{ .Values.vote.resources.limits.memory }}

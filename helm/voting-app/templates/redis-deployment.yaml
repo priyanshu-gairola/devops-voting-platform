@@ -7,6 +7,13 @@ metadata:
     
 spec:
   replicas: {{ .Values.redis.replicaCount }}
+
+  strategy:
+  type: RollingUpdate
+  rollingUpdate:
+    maxUnavailable: 0
+    maxSurge: 1
+    
   selector:
     matchLabels:
       app: redis
@@ -24,6 +31,27 @@ spec:
         volumeMounts:
         - mountPath: /data
           name: redis-data
+          
+        readinessProbe:
+          tcpSocket:
+            port: 6379
+          initialDelaySeconds: 5
+          periodSeconds: 10
+
+        livenessProbe:
+          tcpSocket:
+            port: 6379
+          initialDelaySeconds: 10
+          periodSeconds: 20
+
+        resources:
+          requests:
+            cpu: {{ .Values.redis.resources.requests.cpu }}
+            memory: {{ .Values.redis.resources.requests.memory }}
+          limits:
+            cpu: {{ .Values.redis.resources.limits.cpu }}
+            memory: {{ .Values.redis.resources.limits.memory }}
+
       volumes:
       - name: redis-data
         emptyDir: {} 

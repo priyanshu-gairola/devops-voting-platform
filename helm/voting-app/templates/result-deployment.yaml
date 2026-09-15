@@ -9,6 +9,12 @@ metadata:
 spec:
   replicas: {{ .Values.result.replicaCount }}
 
+  strategy:
+  type: RollingUpdate
+  rollingUpdate:
+    maxUnavailable: 0
+    maxSurge: 1
+
   selector:
     matchLabels:
       app: result
@@ -24,3 +30,25 @@ spec:
           image: {{ .Values.result.image.repository }}:{{ .Values.result.image.tag }}
           ports:
             - containerPort: 80
+
+          readinessProbe:
+            httpGet:
+              path: /
+              port: 80
+            initialDelaySeconds: 5
+            periodSeconds: 10
+
+          livenessProbe:
+            httpGet:
+              path: /
+              port: 80
+            initialDelaySeconds: 10
+            periodSeconds: 20
+
+          resources:
+            requests:
+              cpu: {{ .Values.result.resources.requests.cpu }}
+              memory: {{ .Values.result.resources.requests.memory }}
+            limits:
+              cpu: {{ .Values.result.resources.limits.cpu }}
+              memory: {{ .Values.result.resources.limits.memory }}
