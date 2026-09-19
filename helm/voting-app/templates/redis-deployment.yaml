@@ -9,10 +9,10 @@ spec:
   replicas: {{ .Values.redis.replicaCount }}
 
   strategy:
-  type: RollingUpdate
-  rollingUpdate:
-    maxUnavailable: 0
-    maxSurge: 1
+    type: RollingUpdate
+    rollingUpdate:
+      maxUnavailable: 0
+      maxSurge: 1
     
   selector:
     matchLabels:
