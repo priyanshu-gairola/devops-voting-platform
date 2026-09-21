@@ -1,0 +1,48 @@
+pipeline {
+    agent any
+
+    stages {
+        stage('Checkout DevOps Repo') {
+            steps {
+                checkout scm
+            }
+        }
+
+        stage('Get Application Source') {
+            steps {
+                sh '''
+                    rm -rf example-voting-app
+                    git clone --depth 1 \
+                      https://github.com/dockersamples/example-voting-app.git \
+                      example-voting-app
+                '''
+            }
+        }
+
+        stage('Validate') {
+            steps {
+                sh '''
+                    test -f example-voting-app/vote/Dockerfile
+                    test -f example-voting-app/vote/requirements.txt
+                    echo "Vote service Dockerfile found"
+                '''
+            }
+        }
+
+        stage('Docker Build') {
+            steps {
+                sh '''
+                    docker build \
+                      -t voting-vote:jenkins-${BUILD_NUMBER} \
+                      example-voting-app/vote
+                '''
+            }
+        }
+    }
+
+    post {
+        always {
+            sh 'docker images voting-vote --format "{{.Repository}}:{{.Tag}}" || true'
+        }
+    }
+}
