@@ -1,6 +1,12 @@
 pipeline {
     agent any
 
+    environment {
+        AWS_REGION = 'ap-south-1'
+        ECR_REPOSITORY = '687633314339.dkr.ecr.ap-south-1.amazonaws.com/devops-voting/vote'
+        IMAGE_TAG = "jenkins-${BUILD_NUMBER}"
+    }
+
     stages {
         stage('Checkout DevOps Repo') {
             steps {
@@ -33,8 +39,41 @@ pipeline {
             steps {
                 sh '''
                     docker build \
-                      -t voting-vote:jenkins-${BUILD_NUMBER} \
+                      -t voting-vote:${IMAGE_TAG} \
                       example-voting-app/vote
+                '''
+            }
+        }
+
+        stage('ECR Login') {
+            steps {
+                withCredentials([
+                    usernamePassword(
+                        credentialsId: 'aws-ecr',
+                        usernameVariable: 'AWS_ACCESS_KEY_ID',
+                        passwordVariable: 'AWS_SECRET_ACCESS_KEY'
+                    )
+                ]) {
+                    sh '''
+                        aws ecr get-login-password \
+                          --region ${AWS_REGION} | \
+                        docker login \
+                          --username AWS \
+                          --password-stdin ${ECR_REPOSITORY}
+                    '''
+                }
+            }
+        }
+
+        stage('Tag and Push') {
+            steps {
+                sh '''
+                    docker tag \
+                      voting-vote:${IMAGE_TAG} \
+                      ${ECR_REPOSITORY}:${IMAGE_TAG}
+
+                    docker push \
+                      ${ECR_REPOSITORY}:${IMAGE_TAG}
                 '''
             }
         }
@@ -42,7 +81,10 @@ pipeline {
 
     post {
         always {
-            sh 'docker images voting-vote --format "{{.Repository}}:{{.Tag}}" || true'
+            sh '''
+                docker images voting-vote \
+                  --format "{{.Repository}}:{{.Tag}}" || true
+            '''
         }
     }
 }
