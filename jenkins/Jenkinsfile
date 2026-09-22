@@ -1,3 +1,4 @@
+```groovy
 pipeline {
     agent any
 
@@ -8,9 +9,27 @@ pipeline {
     }
 
     stages {
+
         stage('Checkout DevOps Repo') {
             steps {
                 checkout scm
+            }
+        }
+
+        stage('Test AWS Access') {
+            steps {
+                withCredentials([
+                    usernamePassword(
+                        credentialsId: 'aws-ecr',
+                        usernameVariable: 'AWS_ACCESS_KEY_ID',
+                        passwordVariable: 'AWS_SECRET_ACCESS_KEY'
+                    )
+                ]) {
+                    sh '''
+                        echo "Testing AWS authentication..."
+                        aws sts get-caller-identity
+                    '''
+                }
             }
         }
 
@@ -88,3 +107,4 @@ pipeline {
         }
     }
 }
+```
