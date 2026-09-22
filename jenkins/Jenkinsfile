@@ -95,6 +95,65 @@ pipeline {
                 '''
             }
         }
+
+        stage('Configure EKS Access') {
+            steps {
+                withCredentials([
+                    usernamePassword(
+                        credentialsId: 'aws-ecr',
+                        usernameVariable: 'AWS_ACCESS_KEY_ID',
+                        passwordVariable: 'AWS_SECRET_ACCESS_KEY'
+                    )
+                ]) {
+                    sh '''
+                        aws eks update-kubeconfig \
+                          --region ${AWS_REGION} \
+                          --name devops-voting-eks
+
+                        kubectl get nodes
+                    '''
+                }
+            }
+        }
+
+        stage('Deploy to EKS') {
+            steps {
+                sh '''
+                    helm upgrade --install voting-app helm/voting-app \
+                      --namespace voting \
+                      --create-namespace \
+                      --set vote.image.tag=${IMAGE_TAG}
+                '''
+            }
+        }
+
+        stage('Verify Rollout') {
+            steps {
+                sh '''
+                    kubectl rollout status deployment/vote \
+                      --namespace voting \
+                      --timeout=180s
+
+                    kubectl get pods -n voting
+                '''
+            }
+        }
+
+        stage('Smoke Test') {
+            steps {
+                sh '''
+                    ALB_HOST=$(kubectl get ingress voting-ingress \
+                      -n voting \
+                      -o jsonpath='{.status.loadBalancer.ingress[0].hostname}')
+
+                    echo "Testing ALB: ${ALB_HOST}"
+
+                    curl --fail --silent --show-error \
+                      --max-time 30 \
+                      -I "http://${ALB_HOST}"
+                '''
+            }
+        }
     }
 
     post {
