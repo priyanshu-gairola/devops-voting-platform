@@ -95,7 +95,6 @@ pipeline {
                 '''
             }
         }
-
         stage('Configure EKS Access') {
             steps {
                 withCredentials([
@@ -118,24 +117,40 @@ pipeline {
 
         stage('Deploy to EKS') {
             steps {
-                sh '''
-                    helm upgrade --install voting-app helm/voting-app \
-                      --namespace voting \
-                      --create-namespace \
-                      --set vote.image.tag=${IMAGE_TAG}
-                '''
+                withCredentials([
+                    usernamePassword(
+                        credentialsId: 'aws-ecr',
+                        usernameVariable: 'AWS_ACCESS_KEY_ID',
+                        passwordVariable: 'AWS_SECRET_ACCESS_KEY'
+                    )
+                ]) {
+                    sh '''
+                        helm upgrade --install voting-app helm/voting-app \
+                          --namespace voting \
+                          --create-namespace \
+                          --set vote.image.tag=${IMAGE_TAG}
+                    '''
+                }
             }
         }
 
         stage('Verify Rollout') {
             steps {
-                sh '''
-                    kubectl rollout status deployment/vote \
-                      --namespace voting \
-                      --timeout=180s
+                withCredentials([
+                    usernamePassword(
+                        credentialsId: 'aws-ecr',
+                        usernameVariable: 'AWS_ACCESS_KEY_ID',
+                        passwordVariable: 'AWS_SECRET_ACCESS_KEY'
+                    )
+                ]) {
+                    sh '''
+                        kubectl rollout status deployment/vote \
+                          --namespace voting \
+                          --timeout=180s
 
-                    kubectl get pods -n voting
-                '''
+                        kubectl get pods -n voting
+                    '''
+                }
             }
         }
 
