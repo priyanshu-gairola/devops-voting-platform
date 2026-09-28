@@ -1219,7 +1219,7 @@ Potential next-stage improvements include:
 These are future improvements and are not represented as completed features in the current project.
 
 
-# 36. Final Project Definition
+# Final Project Definition
 
 This project demonstrates an end-to-end DevOps workflow:
 
