@@ -1,15 +1,15 @@
-runtime flow
------------------
 User
- ↓
-Load Balancer / Ingress
- ↓
+   ↓
+AWS Application Load Balancer
+   ↓
+Kubernetes Ingress
+   ↓
 Kubernetes Service
- ↓
+   ↓
 Pod
- ↓
+   ↓
 Container
- ↓
+   ↓
 Application
- ↓
-Redis / PostgreSQL
+   ↓
+Redis / Worker / PostgreSQL

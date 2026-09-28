@@ -1,15 +1,19 @@
-developer flow
------------------
 Developer
    ↓
 GitHub
    ↓
 Jenkins
    ↓
-Docker
+Docker Build
    ↓
-ECR
+Docker Image
+   ↓
+Amazon ECR
    ↓
 Helm
    ↓
 Kubernetes / EKS
+   ↓
+Rolling Update
+   ↓
+Smoke Test
